@@ -4,6 +4,7 @@ import sbt._
 import sbt.Keys._
 import akka.actor.{ActorSystem, ActorRef}
 import akka.pattern.gracefulStop
+import com.typesafe.js.sbt.JavaScriptPlugin
 import com.typesafe.webdriver.{HtmlUnit, LocalBrowser, PhantomJs}
 import akka.util.Timeout
 import scala.concurrent.duration._
@@ -12,7 +13,7 @@ import scala.concurrent.{Await, Future}
 /**
  * Declares the main parts of a WebDriver based plugin for sbt.
  */
-abstract class WebDriverPlugin extends sbt.Plugin {
+abstract class WebDriverPlugin extends JavaScriptPlugin {
 
   object WebDriverKeys {
 
@@ -20,10 +21,9 @@ abstract class WebDriverPlugin extends sbt.Plugin {
       val HtmlUnit, PhantomJs = Value
     }
 
-    val browserType = SettingKey[BrowserType.Value]("js-browser-type", "The type of browser to use.")
-    val webBrowser = TaskKey[ActorRef]("js-web-browser", "An actor representing the webdriver browser.")
-    val parallelism = SettingKey[Int]("js-parallelism", "The number of parallel tasks for the webdriver host. Defaults to the # of available processors + 1 to keep things busy.")
-    val reporter = TaskKey[LoggerReporter]("js-reporter", "The reporter to use for conveying processing results.")
+    val browserType = SettingKey[BrowserType.Value]("wd-browser-type", "The type of browser to use.")
+    val webBrowser = TaskKey[ActorRef]("wd-web-browser", "An actor representing the webdriver browser.")
+    val parallelism = SettingKey[Int]("wd-parallelism", "The number of parallel tasks for the webdriver host. Defaults to the # of available processors + 1 to keep things busy.")
   }
 
   import WebDriverKeys._
@@ -67,13 +67,12 @@ abstract class WebDriverPlugin extends sbt.Plugin {
     }
   }
 
-  override val globalSettings: Seq[Setting[_]] = Seq(
+  override def globalSettings: Seq[Setting[_]] = super.globalSettings ++ Seq(
     onLoad in Global := (onLoad in Global).value andThen (load(browserType.value, _)),
     onUnload in Global := (onUnload in Global).value andThen (unload),
     browserType := BrowserType.HtmlUnit,
     webBrowser <<= (state) map (_.get(browserAttrKey).get),
-    parallelism := java.lang.Runtime.getRuntime.availableProcessors() + 1,
-    reporter := new LoggerReporter(5, streams.value.log)
+    parallelism := java.lang.Runtime.getRuntime.availableProcessors() + 1
   )
 
   /*
