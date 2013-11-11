@@ -4,7 +4,6 @@ import sbt._
 import sbt.Keys._
 import akka.actor.{ActorSystem, ActorRef}
 import akka.pattern.gracefulStop
-import com.typesafe.js.sbt.JavaScriptPlugin
 import com.typesafe.webdriver.{HtmlUnit, LocalBrowser, PhantomJs}
 import akka.util.Timeout
 import scala.concurrent.duration._
@@ -13,7 +12,7 @@ import scala.concurrent.{Await, Future}
 /**
  * Declares the main parts of a WebDriver based plugin for sbt.
  */
-abstract class WebDriverPlugin extends JavaScriptPlugin {
+object WebDriverPlugin extends sbt.Plugin {
 
   object WebDriverKeys {
 
@@ -32,46 +31,36 @@ abstract class WebDriverPlugin extends JavaScriptPlugin {
   implicit val webDriverTimeout = Timeout(5.seconds)
 
   private val browserAttrKey = AttributeKey[ActorRef]("web-browser")
-  private val browserOwnerAttrKey = AttributeKey[WebDriverPlugin]("web-browser-owner")
 
   private def load(browserType: BrowserType.Value, state: State): State = {
-    state.get(browserOwnerAttrKey) match {
-      case None => {
-        val sessionProps = browserType match {
-          case BrowserType.HtmlUnit => HtmlUnit.props()
-          case BrowserType.PhantomJs => PhantomJs.props()
-        }
-        val browser = webDriverSystem.actorOf(sessionProps, "localBrowser")
-        browser ! LocalBrowser.Startup
-        val newState = state.put(browserAttrKey, browser).put(browserOwnerAttrKey, this)
-        newState.addExitHook(unload(newState))
-      }
-      case _ => state
+    val sessionProps = browserType match {
+      case BrowserType.HtmlUnit => HtmlUnit.props()
+      case BrowserType.PhantomJs => PhantomJs.props()
     }
+    val browser = webDriverSystem.actorOf(sessionProps, "localBrowser")
+    browser ! LocalBrowser.Startup
+    val newState = state.put(browserAttrKey, browser)
+    newState.addExitHook(unload(newState))
   }
 
   private def unload(state: State): State = {
-    state.get(browserOwnerAttrKey) match {
-      case Some(browserOwner: WebDriverPlugin) if browserOwner eq this =>
-        state.get(browserAttrKey).foreach {
-          browser =>
-            try {
-              val stopped: Future[Boolean] = gracefulStop(browser, 250.millis)
-              Await.result(stopped, 500.millis)
-            } catch {
-              case _: Throwable =>
-            }
+    state.get(browserAttrKey).foreach {
+      browser =>
+        try {
+          val stopped: Future[Boolean] = gracefulStop(browser, 250.millis)
+          Await.result(stopped, 500.millis)
+        } catch {
+          case _: Throwable =>
         }
-        state.remove(browserAttrKey).remove(browserOwnerAttrKey)
-      case _ => state
     }
+    state.remove(browserAttrKey)
   }
 
   override def globalSettings: Seq[Setting[_]] = super.globalSettings ++ Seq(
     onLoad in Global := (onLoad in Global).value andThen (load(browserType.value, _)),
     onUnload in Global := (onUnload in Global).value andThen (unload),
     browserType := BrowserType.HtmlUnit,
-    webBrowser <<= (state) map (_.get(browserAttrKey).get),
+    webBrowser <<= state map (_.get(browserAttrKey).get),
     parallelism := java.lang.Runtime.getRuntime.availableProcessors() + 1
   )
 
