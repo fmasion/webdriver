@@ -34,7 +34,7 @@ illustrates essential interactions. Here is a snippet of it:
 The above illustrates how a browser can be launched, a session established and then some arbitrary JavaScript
 sent to it through the session.
 
-An additional webdriver-sbt sub-project is provided that declares the a base for sbt plugins that use webdriver.
+An additional sbt-webdriver sub-project is provided that declares the a base for sbt plugins that use webdriver.
 For example settings are declared that locate js main and test source files. This
 sub-project has a separate release cycle to webdriver itself and could be spun off into its own repo at a later
 point in time e.g. if/when Maven/Gradle support is required. The main point here is that the core webdriver

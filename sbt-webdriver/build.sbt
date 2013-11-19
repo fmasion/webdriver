@@ -2,7 +2,7 @@ sbtPlugin := true
 
 organization := "com.typesafe"
 
-name := "webdriver-sbt"
+name := "sbt-webdriver"
 
 version := "1.0.0-SNAPSHOT"
 
