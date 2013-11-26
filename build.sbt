@@ -13,7 +13,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.2.3",
-  "io.spray" % "spray-client" % "1.2-20130912",
+  "io.spray" % "spray-client" % "1.2-RC4",
   "io.spray" %% "spray-json" % "1.2.5",
   "net.sourceforge.htmlunit" % "htmlunit" % "2.13",
   "org.specs2" %% "specs2" % "2.2.2" % "test",

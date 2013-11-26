@@ -56,11 +56,13 @@ class HttpWebDriverCommands(host: String, port: Int)(implicit system: ActorSyste
   }
 
   import CommandProtocol._
+  import MediaRange._
+  import MediaTypes._
 
   protected val pipeline: HttpRequest => Future[CommandResponse] = (
     addHeaders(
       Host(host, port),
-      Accept(Seq(MediaTypes.`application/json`, MediaTypes.`image/png`))
+      Accept(`application/json`, `image/png`)
     )
       ~> sendReceive
       ~> unmarshalIgnoreStatus[CommandResponse]
