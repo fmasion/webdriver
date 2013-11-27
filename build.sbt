@@ -21,6 +21,16 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-testkit" % "2.2.3" % "test"
 )
 
+publishTo := {
+    val isSnapshot = version.value.contains("-SNAPSHOT")
+    val typesafe = "http://private-repo.typesafe.com/typesafe/"
+    val (name, url) = if (isSnapshot)
+                        ("sbt-plugin-snapshots", typesafe + "maven-snapshots")
+                      else
+                        ("sbt-plugin-releases", typesafe + "maven-releases")
+    Some(Resolver.url(name, new URL(url)))
+}
+
 lazy val root = project.in( file(".") )
 
 lazy val `sbt-webdriver` = project.dependsOn(root)
