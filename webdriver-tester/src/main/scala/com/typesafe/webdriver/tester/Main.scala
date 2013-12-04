@@ -21,7 +21,7 @@ object Main {
       System.exit(1)
     }
 
-    val browser = system.actorOf(PhantomJs.props(), "localBrowser")
+    val browser = system.actorOf(PhantomJs.props(system), "localBrowser")
     browser ! LocalBrowser.Startup
     for (
       session <- (browser ? LocalBrowser.CreateSession).mapTo[ActorRef];

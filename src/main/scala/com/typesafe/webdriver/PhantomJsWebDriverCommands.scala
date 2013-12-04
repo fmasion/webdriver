@@ -3,14 +3,14 @@ package com.typesafe.webdriver
 import spray.json.{JsString, JsValue, JsArray}
 import scala.concurrent.Future
 import com.typesafe.webdriver.WebDriverCommands.WebDriverError
-import akka.actor.ActorSystem
+import akka.actor.ActorRefFactory
 import spray.client.pipelining._
 
 /**
  * Specialisations for PhantomJs.
  */
-class PhantomJsWebDriverCommands(host: String, port: Int)(implicit system: ActorSystem)
-  extends HttpWebDriverCommands(host, port) {
+class PhantomJsWebDriverCommands(arf: ActorRefFactory, host: String, port: Int)
+  extends HttpWebDriverCommands(arf, host, port) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 

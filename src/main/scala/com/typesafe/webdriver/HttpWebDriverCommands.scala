@@ -1,6 +1,6 @@
 package com.typesafe.webdriver
 
-import akka.actor.ActorSystem
+import akka.actor.ActorRefFactory
 import spray.json._
 import scala.concurrent.Future
 import com.typesafe.webdriver.WebDriverCommands.{Errors, WebDriverError, WebDriverErrorDetails}
@@ -10,7 +10,7 @@ import com.typesafe.webdriver.WebDriverCommands.{Errors, WebDriverError, WebDriv
  * @param host the host of the webdriver
  * @param port the port of the webdriver
  */
-class HttpWebDriverCommands(host: String, port: Int)(implicit system: ActorSystem) extends WebDriverCommands {
+class HttpWebDriverCommands(arf: ActorRefFactory, host: String, port: Int) extends WebDriverCommands {
 
   import scala.concurrent.ExecutionContext.Implicits.global
   import spray.client.pipelining._
@@ -20,6 +20,8 @@ class HttpWebDriverCommands(host: String, port: Int)(implicit system: ActorSyste
   import spray.httpx.SprayJsonSupport._
   import spray.json.DefaultJsonProtocol
   import spray.httpx.PipelineException
+
+  implicit private val implicitArf = arf
 
   protected case class CommandResponse(sessionId: String, status: Int, value: JsValue)
 
