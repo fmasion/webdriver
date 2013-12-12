@@ -7,7 +7,7 @@ import akka.pattern.gracefulStop
 import com.typesafe.webdriver.{HtmlUnit, LocalBrowser, PhantomJs}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import com.typesafe.sbt.web.WebPlugin
+import com.typesafe.web.sbt.WebPlugin
 
 /**
  * Declares the main parts of a WebDriver based plugin for sbt.
@@ -25,8 +25,21 @@ object WebDriverPlugin extends sbt.Plugin {
     val parallelism = SettingKey[Int]("wd-parallelism", "The number of parallel tasks for the webdriver host. Defaults to the # of available processors + 1 to keep things busy.")
   }
 
-  import WebPlugin._
   import WebDriverKeys._
+
+  override def globalSettings: Seq[Setting[_]] = super.globalSettings ++ Seq(
+    browserType := BrowserType.HtmlUnit,
+    onLoad in Global := (onLoad in Global).value andThen (load(browserType.value, _)),
+    onUnload in Global := (onUnload in Global).value andThen (unload)
+  )
+
+  def webDriverSettings: Seq[Setting[_]] = Seq(
+    webBrowser <<= state map (_.get(browserAttrKey).get),
+    parallelism := java.lang.Runtime.getRuntime.availableProcessors() + 1
+  )
+
+
+  import WebPlugin._
 
   private val browserAttrKey = AttributeKey[ActorRef]("web-browser")
 
@@ -57,11 +70,4 @@ object WebDriverPlugin extends sbt.Plugin {
     state.remove(browserAttrKey)
   }
 
-  override def globalSettings: Seq[Setting[_]] = super.globalSettings ++ Seq(
-    onLoad in Global := (onLoad in Global).value andThen (load(browserType.value, _)),
-    onUnload in Global := (onUnload in Global).value andThen (unload),
-    browserType := BrowserType.HtmlUnit,
-    webBrowser <<= state map (_.get(browserAttrKey).get),
-    parallelism := java.lang.Runtime.getRuntime.availableProcessors() + 1
-  )
 }
