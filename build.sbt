@@ -6,8 +6,6 @@ version := "1.0.0-SNAPSHOT"
 
 scalaVersion := "2.10.3"
 
-resolvers += "spray repo" at "http://repo.spray.io/"
-
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.2.3",
   "io.spray" % "spray-client" % "1.2.0",
