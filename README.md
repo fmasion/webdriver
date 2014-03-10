@@ -1,6 +1,8 @@
 WebDriver
 =========
 
+[![Build Status](https://api.travis-ci.org/typesafehub/webdriver.png?branch=master)](https://travis-ci.org/typesafehub/webdriver)
+
 WebDriver is a wire based protocol [drafted by the W3C](http://www.w3.org/TR/webdriver/)
 in order to provide browsers with scripting capability.
 WebDriver-enabled browsers include Chrome, Firefox, Safari, Internet Explorer and [PhantomJs](http://phantomjs.org/).
