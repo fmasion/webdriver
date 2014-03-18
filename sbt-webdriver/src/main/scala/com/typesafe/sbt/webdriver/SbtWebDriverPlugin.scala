@@ -12,7 +12,9 @@ import com.typesafe.sbt.web.SbtWebPlugin
 /**
  * Declares the main parts of a WebDriver based plugin for sbt.
  */
-object SbtWebDriverPlugin extends sbt.Plugin {
+object SbtWebDriverPlugin extends sbt.AutoPlugin {
+
+  def select = SbtWebPlugin
 
   object WebDriverKeys {
 
@@ -33,7 +35,7 @@ object SbtWebDriverPlugin extends sbt.Plugin {
     onUnload in Global := (onUnload in Global).value andThen (unload)
   )
 
-  def webDriverSettings: Seq[Setting[_]] = Seq(
+  override def projectSettings: Seq[Setting[_]] = Seq(
     webBrowser <<= state map (_.get(browserAttrKey).get),
     parallelism := java.lang.Runtime.getRuntime.availableProcessors() + 1
   )
