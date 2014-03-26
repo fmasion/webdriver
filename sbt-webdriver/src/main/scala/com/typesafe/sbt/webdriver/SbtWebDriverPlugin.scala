@@ -14,7 +14,8 @@ import com.typesafe.sbt.web.SbtWebPlugin
  */
 object SbtWebDriverPlugin extends sbt.AutoPlugin {
 
-  def select = SbtWebPlugin
+  override def requires = SbtWebPlugin
+  override def trigger = AllRequirements
 
   object WebDriverKeys {
 
