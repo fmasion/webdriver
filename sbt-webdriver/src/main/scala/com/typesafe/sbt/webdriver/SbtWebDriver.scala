@@ -7,14 +7,14 @@ import akka.pattern.gracefulStop
 import com.typesafe.webdriver.{HtmlUnit, LocalBrowser, PhantomJs}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import com.typesafe.sbt.web.SbtWebPlugin
+import com.typesafe.sbt.web.SbtWeb
 
 /**
  * Declares the main parts of a WebDriver based plugin for sbt.
  */
-object SbtWebDriverPlugin extends sbt.AutoPlugin {
+object SbtWebDriver extends sbt.AutoPlugin {
 
-  override def requires = SbtWebPlugin
+  override def requires = SbtWeb
   override def trigger = AllRequirements
 
   object WebDriverKeys {
@@ -42,12 +42,12 @@ object SbtWebDriverPlugin extends sbt.AutoPlugin {
   )
 
 
-  import SbtWebPlugin._
+  import SbtWeb._
 
   private val browserAttrKey = AttributeKey[ActorRef]("web-browser")
 
   private def load(browserType: BrowserType.Value, state: State): State = {
-    withActorRefFactory(state, SbtWebDriverPlugin.getClass.getName) {
+    withActorRefFactory(state, SbtWebDriver.getClass.getName) {
       arf =>
         val sessionProps = browserType match {
           case BrowserType.HtmlUnit => HtmlUnit.props()
