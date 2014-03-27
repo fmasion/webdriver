@@ -9,13 +9,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import com.typesafe.sbt.web.SbtWeb
 
-/**
- * Declares the main parts of a WebDriver based plugin for sbt.
- */
-object SbtWebDriver extends sbt.AutoPlugin {
-
-  override def requires = SbtWeb
-  override def trigger = AllRequirements
+object Import {
 
   object WebDriverKeys {
 
@@ -28,6 +22,20 @@ object SbtWebDriver extends sbt.AutoPlugin {
     val parallelism = SettingKey[Int]("wd-parallelism", "The number of parallel tasks for the webdriver host. Defaults to the # of available processors + 1 to keep things busy.")
   }
 
+}
+
+/**
+ * Declares the main parts of a WebDriver based plugin for sbt.
+ */
+object SbtWebDriver extends sbt.AutoPlugin {
+
+  override def requires = SbtWeb
+
+  override def trigger = AllRequirements
+
+  val autoImport = Import
+
+  import autoImport._
   import WebDriverKeys._
 
   override def globalSettings: Seq[Setting[_]] = super.globalSettings ++ Seq(
