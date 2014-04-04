@@ -2,7 +2,7 @@ organization := "com.typesafe"
 
 name := "webdriver"
 
-version := "1.0.0-SNAPSHOT"
+version := "1.0.0-M2"
 
 scalaVersion := "2.10.3"
 
@@ -15,6 +15,9 @@ libraryDependencies ++= Seq(
   "junit" % "junit" % "4.11" % "test",
   "com.typesafe.akka" %% "akka-testkit" % "2.2.3" % "test"
 )
+
+// FIXME: Working around https://github.com/sbt/sbt/issues/1156#issuecomment-39317363
+isSnapshot := true
 
 publishTo := {
     val isSnapshot = version.value.contains("-SNAPSHOT")

@@ -4,21 +4,25 @@ organization := "com.typesafe.sbt"
 
 name := "sbt-webdriver"
 
-version := "1.0.0-SNAPSHOT"
+version := "1.0.0-M2"
 
 scalaVersion := "2.10.3"
 
 resolvers ++= Seq(
     Resolver.url("sbt snapshot plugins", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns),
     Resolver.sonatypeRepo("snapshots"),
+    "Typesafe Releases Repository" at "http://repo.typesafe.com/typesafe/releases/",
     "Typesafe Snapshots Repository" at "http://repo.typesafe.com/typesafe/snapshots/"
     )
 
 libraryDependencies ++= Seq(
-  "com.typesafe" %% "webdriver" % "1.0.0-SNAPSHOT"
+  "com.typesafe" %% "webdriver" % "1.0.0-M2"
 )
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.0.0-SNAPSHOT")
+addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.0.0-M2")
+
+// FIXME: Working around https://github.com/sbt/sbt/issues/1156#issuecomment-39317363
+isSnapshot := true
 
 publishMavenStyle := false
 
