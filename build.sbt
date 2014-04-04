@@ -31,6 +31,4 @@ publishTo := {
 
 lazy val root = project.in( file(".") )
 
-lazy val `sbt-webdriver` = project.dependsOn(root)
-
 lazy val `webdriver-tester` = project.dependsOn(root)
