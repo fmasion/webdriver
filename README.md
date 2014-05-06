@@ -36,4 +36,4 @@ illustrates essential interactions. Here is a snippet of it:
 The above illustrates how a browser can be launched, a session established and then some arbitrary JavaScript
 sent to it through the session.
 
-&copy; Typesafe Inc., 2013
+&copy; Typesafe Inc., 2013, 2014
