@@ -16,7 +16,8 @@ class HtmlUnitWebDriverCommands() extends WebDriverCommands {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  override def createSession(): Future[String] = {
+  override def createSession(desiredCapabilities: JsObject = JsObject(),
+                             requiredCapabilities: JsObject = JsObject()): Future[String] = {
     // We like Chrome for no particular reason than its JS is modern. FF may also be a good choice.
     val webClient = new WebClient(BrowserVersion.CHROME)
     val page: HtmlPage = webClient.getPage(WebClient.ABOUT_BLANK)

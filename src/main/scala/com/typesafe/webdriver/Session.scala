@@ -7,7 +7,7 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 import spray.can.Http.ConnectionAttemptFailedException
-import spray.json.{JsValue, JsArray}
+import spray.json.{JsObject, JsValue, JsArray}
 import com.typesafe.webdriver.WebDriverCommands.WebDriverError
 import scala.concurrent.Future
 
@@ -24,9 +24,10 @@ class Session(wd: WebDriverCommands, sessionConnectTimeout: FiniteDuration)
   startWith(Uninitialized, None)
 
   when(Uninitialized) {
-    case Event(Connect, None) =>
-      wd.createSession().onComplete {
-        case Success(sessionId) => self ! SessionCreated(sessionId)
+    case Event(Connect(desiredCapabilities, requiredCapabilities), None) =>
+      wd.createSession(desiredCapabilities,requiredCapabilities).onComplete {
+        case Success(sessionId) =>
+          self ! SessionCreated(sessionId)
         case Failure(_: ConnectionAttemptFailedException) =>
           log.debug("Initial connection attempt failed - retrying shortly.")
           context.system.scheduler.scheduleOnce(500.milliseconds) {
@@ -102,7 +103,7 @@ object Session {
   /**
    * Connect a session.
    */
-  case object Connect
+  case class Connect(desiredCapabilities: JsObject = JsObject(), requiredCapabilities: JsObject = JsObject())
 
   /**
    * Execute JavaScript.

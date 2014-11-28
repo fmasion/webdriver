@@ -1,6 +1,7 @@
 package com.typesafe.webdriver
 
 import akka.actor._
+import spray.json.JsObject
 import scala.sys.process._
 import com.typesafe.webdriver.LocalBrowser._
 import scala.Some
@@ -27,9 +28,9 @@ class LocalBrowser(sessionProps: Props, maybeArgs: Option[Seq[String]]) extends 
   }
 
   when(Started) {
-    case Event(CreateSession, _) =>
+    case Event(CreateSession(desiredCapabilities, requiredCapabilities), _) =>
       val session = context.actorOf(sessionProps, "session")
-      session ! Session.Connect
+      session ! Session.Connect(desiredCapabilities, requiredCapabilities)
       sender ! session
       stay()
   }
@@ -52,7 +53,7 @@ object LocalBrowser {
   /**
    * Start a new session.
    */
-  case object CreateSession
+  case class CreateSession(desiredCapabilities:JsObject=JsObject(), requiredCapabilities:JsObject=JsObject())
 
 
   // Internal FSM states
