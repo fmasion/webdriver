@@ -15,7 +15,7 @@ import com.typesafe.webdriver.WebDriverCommands.WebDriverError
 class LocalBrowserSpec extends Specification {
 
   object TestWebDriverCommands extends WebDriverCommands {
-    override def createSession(desiredCapabilities:JsObject=JsObject(), requiredCapabilities:JsObject=JsObject()): Future[String] = Promise.successful("123").future
+    override def createSession(desiredCapabilities:JsObject=JsObject(), requiredCapabilities:JsObject=JsObject()): Future[(String, Either[WebDriverError, JsValue])] = Promise.successful(("123",Right(JsObject()))).future
 
     override def destroySession(sessionId: String) {}
 

@@ -30,7 +30,7 @@ class LocalBrowser(sessionProps: Props, maybeArgs: Option[Seq[String]]) extends 
   when(Started) {
     case Event(CreateSession(desiredCapabilities, requiredCapabilities), _) =>
       val session = context.actorOf(sessionProps, "session")
-      session ! Session.Connect(desiredCapabilities, requiredCapabilities)
+      session forward Session.Connect(desiredCapabilities, requiredCapabilities)
       sender ! session
       stay()
   }
