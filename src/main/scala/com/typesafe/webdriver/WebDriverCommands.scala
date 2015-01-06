@@ -14,7 +14,7 @@ abstract class WebDriverCommands {
    * @return the future session id
    */
   def createSession(desiredCapabilities: JsObject = JsObject(),
-                    requiredCapabilities: JsObject = JsObject()): Future[String]
+                    requiredCapabilities: JsObject = JsObject()): Future[(String, Either[WebDriverError, JsValue])]
 
   /**
    * Stop an established session. Performed on a best-effort basis.
