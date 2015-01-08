@@ -26,6 +26,10 @@ class SessionSpec extends Specification with NoTimeConversions {
     override def executeNativeJs(sessionId: String, script: String, args: JsArray): Future[Either[WebDriverError, JsValue]] = {
       throw new UnsupportedOperationException
     }
+
+    override def screenshot(sessionId: String): Future[Either[WebDriverError, JsValue]] = {
+      Future.successful(Right(JsString("base64EncodedPNG")))
+    }
   }
 
   "A session" should {
@@ -45,6 +49,21 @@ class SessionSpec extends Specification with NoTimeConversions {
 
       expectMsg(JsString("hi"))
 
+    }
+    "capture a screenshot and return the base64 encoded string representing the PNG to the client" in new TestActorSystem {
+
+      val wd = new TestWebDriverCommands
+
+      val session = system.actorOf(Session.props(wd))
+
+      session ! Session.Connect
+
+      wd.p.success("123")
+      Await.ready(wd.f, 2.seconds)
+
+      session ! Session.ScreenShot
+
+      expectMsg(JsString("base64EncodedPNG"))
     }
   }
 }

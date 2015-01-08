@@ -94,4 +94,9 @@ class HttpWebDriverCommands(arf: ActorRefFactory, host: String, port: Int) exten
   override def executeNativeJs(sessionId: String, script: String, args: JsArray): Future[Either[WebDriverError, JsValue]] = {
     Future.successful(Left(WebDriverError(Errors.UnknownError, WebDriverErrorDetails("Unsupported operation"))))
   }
+
+  override def screenshot(sessionId: String): Future[Either[WebDriverError, JsValue]] = {
+    pipeline(Get(s"/session/$sessionId/screenshot"))
+      .map(toEitherErrorOrValue)
+  }
 }
