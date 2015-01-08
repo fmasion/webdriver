@@ -27,6 +27,9 @@ class SessionSpec extends Specification with NoTimeConversions {
     override def executeNativeJs(sessionId: String, script: String, args: JsArray): Future[Either[WebDriverError, JsValue]] = {
       throw new UnsupportedOperationException
     }
+
+    override def navigateTo(sessionId: String, url: String): Future[Either[WebDriverError, Unit]] =
+      Future.successful(Right(Unit))
   }
 
   "A session" should {
@@ -60,6 +63,23 @@ class SessionSpec extends Specification with NoTimeConversions {
       Await.ready(wd.f, 2.seconds)
 
       expectMsg(JsString("hi"))
+
+    }
+    "be able to navigate to an url" in new TestActorSystem {
+
+      val wd = new TestWebDriverCommands
+
+      val session = system.actorOf(Session.props(wd))
+
+      session ! Session.Connect()
+
+      session ! Session.NavigateTo("http://www.example.com")
+
+      wd.p.success(("123", Right(JsObject())))
+
+      Await.ready(wd.f, 2.seconds)
+
+      expectMsg(Session.Done)
 
     }
   }

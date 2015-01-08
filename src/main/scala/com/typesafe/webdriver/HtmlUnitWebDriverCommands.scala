@@ -69,4 +69,17 @@ class HtmlUnitWebDriverCommands() extends WebDriverCommands {
   override def executeNativeJs(sessionId: String, script: String, args: JsArray): Future[Either[WebDriverError, JsValue]] = {
     Future.successful(Left(WebDriverError(Errors.UnknownError, WebDriverErrorDetails("Unsupported operation"))))
   }
+
+  override def navigateTo(sessionId: String, url: String): Future[Either[WebDriverError, Unit]] = {
+    val webClient = new WebClient(BrowserVersion.CHROME)
+    val navigationResult: Either[WebDriverError, Unit] = try {
+      sessions.put(sessionId, webClient.getPage(url))
+      Right(())
+    } catch {
+      case t: Throwable =>
+        t.printStackTrace()
+        Left(WebDriverError(Errors.UnknownError, WebDriverErrorDetails(t.getMessage)))
+    }
+    Future.successful(navigationResult)
+  }
 }

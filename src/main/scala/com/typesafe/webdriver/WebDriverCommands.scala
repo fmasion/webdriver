@@ -47,6 +47,16 @@ abstract class WebDriverCommands {
    */
   def executeNativeJs(sessionId: String, script: String, args: JsArray): Future[Either[WebDriverError, JsValue]]
 
+  /**
+   * Navigate to a new URL.
+   * POST /session/:sessionId/url
+   * @see https://code.google.com/p/selenium/wiki/JsonWireProtocol#POST_/session/:sessionId/url
+   * @param sessionId the session
+   * @param url the url to navigate to
+   * @return
+   */
+  def navigateTo(sessionId:String, url:String): Future[Either[WebDriverError, Unit]]
+
 }
 
 object WebDriverCommands {

@@ -77,8 +77,15 @@ class HttpWebDriverCommands(arf: ActorRefFactory, host: String, port: Int) exten
       Left(WebDriverError(response.status, response.value.convertTo[WebDriverErrorDetails]))
     }
   }
-
-
+  
+  protected def toEitherErrorOrUnit(response: CommandResponse): Either[WebDriverError, Unit] = {
+    if (response.status == Errors.Success) {
+      Right(())
+    } else {
+      Left(WebDriverError(response.status, response.value.convertTo[WebDriverErrorDetails]))
+    }
+  }
+  
   override def createSession(desiredCapabilities: JsObject = JsObject(),
                              requiredCapabilities: JsObject = JsObject()): Future[(String, Either[WebDriverError, JsValue])] = {
     val capabilities = JsObject("desiredCapabilities"->desiredCapabilities, "requiredCapabilities"->requiredCapabilities).compactPrint
@@ -96,5 +103,10 @@ class HttpWebDriverCommands(arf: ActorRefFactory, host: String, port: Int) exten
 
   override def executeNativeJs(sessionId: String, script: String, args: JsArray): Future[Either[WebDriverError, JsValue]] = {
     Future.successful(Left(WebDriverError(Errors.UnknownError, WebDriverErrorDetails("Unsupported operation"))))
+  }
+
+  override def navigateTo(sessionId: String, url: String): Future[Either[WebDriverError, Unit]] = {
+    pipeline(Post(s"/session/$sessionId/url", s"""{"url":"$url"}"""))
+      .map(toEitherErrorOrUnit)
   }
 }
