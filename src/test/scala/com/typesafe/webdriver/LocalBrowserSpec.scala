@@ -25,6 +25,9 @@ class LocalBrowserSpec extends Specification {
     override def executeNativeJs(sessionId: String, script: String, args: JsArray): Future[Either[WebDriverError, JsValue]] = {
       throw new UnsupportedOperationException
     }
+
+    override def navigateTo(sessionId: String, url: String): Future[Either[WebDriverError, Unit]] =
+      throw new UnsupportedOperationException
   }
 
   "The local browser" should {
