@@ -7,7 +7,7 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 import spray.can.Http.ConnectionAttemptFailedException
-import spray.json.{JsValue, JsArray}
+import spray.json.{JsObject, JsValue, JsArray}
 import com.typesafe.webdriver.WebDriverCommands.WebDriverError
 import scala.concurrent.Future
 
@@ -24,13 +24,19 @@ class Session(wd: WebDriverCommands, sessionConnectTimeout: FiniteDuration)
   startWith(Uninitialized, None)
 
   when(Uninitialized) {
-    case Event(Connect, None) =>
-      wd.createSession().onComplete {
-        case Success(sessionId) => self ! SessionCreated(sessionId)
+    case Event(Connect(desiredCapabilities, requiredCapabilities), None) =>
+      val origSender = sender()
+      wd.createSession(desiredCapabilities,requiredCapabilities).onComplete {
+        case Success((sessionId, Right(capabilities))) =>
+          self.tell(SessionCreated(sessionId, capabilities), origSender)
+        case Success((sessionId, Left(error))) =>
+          log.error("Stopping due to not being able to establish a session with requested capabilities - web driver error - {}.",error)
+          origSender.tell(SessionAborted(sessionId,error), origSender)
+          stop()
         case Failure(_: ConnectionAttemptFailedException) =>
           log.debug("Initial connection attempt failed - retrying shortly.")
           context.system.scheduler.scheduleOnce(500.milliseconds) {
-            self ! Connect
+            self.tell(Connect(desiredCapabilities, requiredCapabilities), origSender)
           }
         case Failure(t) =>
           log.error("Stopping due to not being able to establish a session - exception thrown - {}.", t)
@@ -40,15 +46,21 @@ class Session(wd: WebDriverCommands, sessionConnectTimeout: FiniteDuration)
   }
 
   when(Connecting, stateTimeout = sessionConnectTimeout) {
-    case Event(Connect, None) =>
-      wd.createSession().onComplete {
-        case Success(sessionId) => self ! SessionCreated(sessionId)
+    case Event(Connect(desiredCapabilities, requiredCapabilities), None) =>
+      val origSender = sender()
+      wd.createSession(desiredCapabilities, requiredCapabilities).onComplete {
+        case Success((sessionId, Right(capabilities))) => self.tell(SessionCreated(sessionId, capabilities), origSender)
+        case Success((sessionId, Left(error))) =>
+          log.error("Stopping due to not being able to establish a session with requested capabilities - web driver error - {}.",error)
+          origSender.tell(SessionAborted(sessionId,error), origSender)
+          stop()
         case Failure(t) =>
           log.error("Stopping due to not being able to establish a session - exception thrown - {}.", t)
           stop()
       }
       stay()
-    case Event(SessionCreated(sessionId), None) => goto(Connected) using Some(sessionId)
+    case Event(SessionCreated(sessionId, capabilities), None) =>
+      goto(Connected) using Some(sessionId)
     case Event(StateTimeout, None) =>
       log.error("Stopping due to not being able to establish a session - timed out.")
       stop()
@@ -73,7 +85,7 @@ class Session(wd: WebDriverCommands, sessionConnectTimeout: FiniteDuration)
 
   when(Connected) {
     case Event(e: ExecuteJs, someSessionId@Some(_)) => {
-      val origSender = sender
+      val origSender = sender()
       someSessionId.foreach {
         sessionId =>
           handleJsExecuteResult(wd.executeJs(sessionId, e.script, e.args), origSender)
@@ -81,7 +93,7 @@ class Session(wd: WebDriverCommands, sessionConnectTimeout: FiniteDuration)
       stay()
     }
     case Event(e: ExecuteNativeJs, someSessionId@Some(_)) => {
-      val origSender = sender
+      val origSender = sender()
       someSessionId.foreach {
         sessionId =>
           handleJsExecuteResult(wd.executeNativeJs(sessionId, e.script, e.args), origSender)
@@ -102,7 +114,7 @@ object Session {
   /**
    * Connect a session.
    */
-  case object Connect
+  case class Connect(desiredCapabilities: JsObject = JsObject(), requiredCapabilities: JsObject = JsObject())
 
   /**
    * Execute JavaScript.
@@ -120,6 +132,8 @@ object Session {
    */
   case class ExecuteNativeJs(script: String, args: JsArray)
 
+  case class SessionAborted(sessionId: String, error:WebDriverError)
+
   /**
    * A convenience for creating the actor.
    */
@@ -129,7 +143,7 @@ object Session {
 
   // Internal messages
 
-  private[webdriver] case class SessionCreated(sessionId: String)
+  private[webdriver] case class SessionCreated(sessionId: String, capabilities:JsValue)
 
 
   // Internal FSM states

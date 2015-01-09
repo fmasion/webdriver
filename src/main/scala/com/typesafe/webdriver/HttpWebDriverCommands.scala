@@ -78,8 +78,11 @@ class HttpWebDriverCommands(arf: ActorRefFactory, host: String, port: Int) exten
     }
   }
 
-  override def createSession(): Future[String] = {
-    pipeline(Post("/session", """{"desiredCapabilities": {}}""")).withFilter(_.status == 0).map(_.sessionId)
+
+  override def createSession(desiredCapabilities: JsObject = JsObject(),
+                             requiredCapabilities: JsObject = JsObject()): Future[(String, Either[WebDriverError, JsValue])] = {
+    val capabilities = JsObject("desiredCapabilities"->desiredCapabilities, "requiredCapabilities"->requiredCapabilities).compactPrint
+    pipeline(Post("/session",capabilities)).map(response => (response.sessionId,toEitherErrorOrValue(response)))
   }
 
   override def destroySession(sessionId: String) {
