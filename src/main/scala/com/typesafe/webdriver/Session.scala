@@ -73,6 +73,9 @@ class Session(wd: WebDriverCommands, sessionConnectTimeout: FiniteDuration)
     case evt@Event(NavigateTo(_), None) =>
       self forward evt.event
       stay()
+    case evt@Event(ScreenShot, None) =>
+      self forward evt.event
+      stay()
   }
 
   private def handleJsExecuteResult(maybeResult: Future[Either[WebDriverError, JsValue]], origSender: ActorRef): Unit = {
@@ -125,6 +128,14 @@ class Session(wd: WebDriverCommands, sessionConnectTimeout: FiniteDuration)
       }
       stay()
     }
+    case Event(ScreenShot, someSessionId@Some(_)) => {
+      val origSender = sender()
+      someSessionId.foreach {
+        sessionId =>
+          handleJsExecuteResult(wd.screenshot(sessionId), origSender)
+      }
+      stay()
+    }
   }
 
   onTermination {
@@ -156,6 +167,11 @@ object Session {
    * @param args the arguments to pass to the script.
    */
   case class ExecuteNativeJs(script: String, args: JsArray)
+
+  /**
+   * Take a screenshot
+   */
+  case object ScreenShot
 
   case class SessionAborted(sessionId: String, error:WebDriverError)
 

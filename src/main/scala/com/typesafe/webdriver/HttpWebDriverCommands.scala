@@ -105,6 +105,11 @@ class HttpWebDriverCommands(arf: ActorRefFactory, host: String, port: Int) exten
     Future.successful(Left(WebDriverError(Errors.UnknownError, WebDriverErrorDetails("Unsupported operation"))))
   }
 
+  override def screenshot(sessionId: String): Future[Either[WebDriverError, JsValue]] = {
+    pipeline(Get(s"/session/$sessionId/screenshot"))
+      .map(toEitherErrorOrValue)
+  }
+
   override def navigateTo(sessionId: String, url: String): Future[Either[WebDriverError, Unit]] = {
     pipeline(Post(s"/session/$sessionId/url", s"""{"url":"$url"}"""))
       .map(toEitherErrorOrUnit)

@@ -82,4 +82,8 @@ class HtmlUnitWebDriverCommands() extends WebDriverCommands {
     }
     Future.successful(navigationResult)
   }
+
+  override def screenshot(sessionId: String): Future[Either[WebDriverError, JsValue]] = {
+    Future.successful(Left(WebDriverError(Errors.UnknownError, WebDriverErrorDetails("Unsupported operation"))))
+  }
 }

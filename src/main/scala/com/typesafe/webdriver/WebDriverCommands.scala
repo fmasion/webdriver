@@ -57,6 +57,15 @@ abstract class WebDriverCommands {
    */
   def navigateTo(sessionId:String, url:String): Future[Either[WebDriverError, Unit]]
 
+  /**
+   * Take a screenshot of the current window.
+   * GET /session/:sessionId/screenshot
+   * @see https://code.google.com/p/selenium/wiki/JsonWireProtocol#GET_/session/:sessionId/screenshot
+   * @param sessionId the session
+   * @return
+   */
+  def screenshot(sessionId:String): Future[Either[WebDriverError, JsValue]]
+
 }
 
 object WebDriverCommands {
