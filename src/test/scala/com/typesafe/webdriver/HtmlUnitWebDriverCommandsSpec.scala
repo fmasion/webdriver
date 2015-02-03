@@ -16,11 +16,10 @@ class HtmlUnitWebDriverCommandsSpec extends Specification with NoDurationConvers
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
 
-  def withSession(block: (WebDriverCommands, String) => Future[Either[WebDriverError, JsValue]]): Future[Either[WebDriverError, JsValue]] = {
+  def withSession(block: (WebDriverCommands, (String, Either[WebDriverError, JsValue])) => Future[Either[WebDriverError, JsValue]]): Future[Either[WebDriverError, JsValue]] = {
     val commands = new HtmlUnitWebDriverCommands()
-    val maybeSession = commands.createSession().map {
-      sessionId =>
-        val result = block(commands, sessionId)
+    val maybeSession = commands.createSession().map { case (sessionId, createResult) =>
+        val result = block(commands, (sessionId, createResult))
         result.onComplete {
           case _ => commands.destroySession(sessionId)
         }
@@ -32,7 +31,8 @@ class HtmlUnitWebDriverCommandsSpec extends Specification with NoDurationConvers
   def testFor(v: JsValue): MatchResult[Any] = {
     val result = withSession {
       (commands, sessionId) =>
-        commands.executeJs(sessionId, "var result = arguments[0];", JsArray(v))
+        val (id, _) = sessionId
+        commands.executeJs(id, "var result = arguments[0];", JsArray(v))
     }
     Await.result(result, Duration(1, SECONDS)) must_== Right(v)
   }
@@ -49,17 +49,18 @@ class HtmlUnitWebDriverCommandsSpec extends Specification with NoDurationConvers
       val commands = new HtmlUnitWebDriverCommands()
       val maybeSession = commands.createSession().map {
         sessionId =>
-          commands.executeJs(sessionId, "var result = arguments[0];", JsArray(JsNumber(1)))
+          val (id, _) = sessionId
+          commands.executeJs(id, "var result = arguments[0];", JsArray(JsNumber(1)))
             .flatMap {
             r =>
               import DefaultJsonProtocol._
               val result = commands.executeJs(
-                sessionId,
+                id,
                 "var result = arguments[0];",
                 JsArray(JsNumber(2)))
               result.onComplete {
                 case _ =>
-                  commands.destroySession(sessionId)
+                  commands.destroySession(id)
               }
               result
           }
@@ -80,7 +81,8 @@ class HtmlUnitWebDriverCommandsSpec extends Specification with NoDurationConvers
   "should fail to execute invalid javascript" in {
     val result = withSession {
       (commands, sessionId) =>
-        commands.executeJs(sessionId, "this is rubbish js;", JsArray())
+        val (id, _) = sessionId
+        commands.executeJs(id, "this is rubbish js;", JsArray())
     }
     Await.result(result, Duration(1, SECONDS)) must beLeft
   }
@@ -88,7 +90,8 @@ class HtmlUnitWebDriverCommandsSpec extends Specification with NoDurationConvers
   "Execute JS natively requesting a commonjs function should fail" in {
     val result = withSession {
       (commands, sessionId) =>
-        commands.executeNativeJs(sessionId, "var result = require('fs').separator;", JsArray())
+        val (id, _) = sessionId
+        commands.executeNativeJs(id, "var result = require('fs').separator;", JsArray())
     }
     Await.result(result, Duration(1, SECONDS)) must beLeft
   }
