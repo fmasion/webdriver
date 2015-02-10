@@ -2,7 +2,7 @@ package com.typesafe.webdriver
 
 import scala.concurrent.Future
 import spray.json._
-import com.typesafe.webdriver.WebDriverCommands.WebDriverError
+import com.typesafe.webdriver.WebDriverCommands.{WebDriverSession, WebDriverError}
 
 /**
  * Encapsulates all of the request/reply commands that can be sent via the WebDriver protocol. All commands perform
@@ -14,7 +14,7 @@ abstract class WebDriverCommands {
    * @return the future session id
    */
   def createSession(desiredCapabilities: JsObject = JsObject(),
-                    requiredCapabilities: JsObject = JsObject()): Future[(String, Either[WebDriverError, JsValue])]
+                    requiredCapabilities: JsObject = JsObject()): Future[Either[WebDriverError, WebDriverSession]]
 
   /**
    * Stop an established session. Performed on a best-effort basis.
@@ -129,6 +129,8 @@ object WebDriverCommands {
     /** Target provided for a move action is out of bounds. */
     val MoveTargetOutOfBounds = 34
   }
+
+  private[webdriver] case class WebDriverSession(id:String, capabilities:JsObject)
 
   /**
    * An error returned by WebDriver.

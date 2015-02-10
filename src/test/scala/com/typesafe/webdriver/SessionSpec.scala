@@ -8,16 +8,16 @@ import scala.concurrent.{Await, Promise, Future}
 import scala.concurrent.duration._
 import org.specs2.time.NoTimeConversions
 import spray.json.{JsObject, JsString, JsValue, JsArray}
-import com.typesafe.webdriver.WebDriverCommands.{WebDriverErrorDetails, WebDriverError}
+import com.typesafe.webdriver.WebDriverCommands.{WebDriverSession, WebDriverErrorDetails, WebDriverError}
 
 @RunWith(classOf[JUnitRunner])
 class SessionSpec extends Specification with NoTimeConversions {
 
   class TestWebDriverCommands extends WebDriverCommands {
-    val p = Promise[(String, Either[WebDriverError, JsValue])]()
+    val p = Promise[Either[WebDriverError, WebDriverSession]]()
     val f = p.future
 
-    def createSession(desiredCapabilities:JsObject=JsObject(), requiredCapabilities:JsObject=JsObject()): Future[(String, Either[WebDriverError, JsValue])] = f
+    def createSession(desiredCapabilities:JsObject=JsObject(), requiredCapabilities:JsObject=JsObject()): Future[Either[WebDriverError, WebDriverSession]] = f
 
     def destroySession(sessionId: String) {}
 
@@ -39,11 +39,11 @@ class SessionSpec extends Specification with NoTimeConversions {
 
       session ! Session.Connect()
 
-      wd.p.success((sid, Left(error)))
+      wd.p.success(Left(error))
 
       Await.ready(wd.f, 2.seconds)
 
-      expectMsg(SessionAborted(sid, error))
+      expectMsg(SessionAborted(error))
     }
     "requeue requests while in a connecting state" in new TestActorSystem {
 
@@ -55,7 +55,7 @@ class SessionSpec extends Specification with NoTimeConversions {
 
       session ! Session.ExecuteJs("", JsArray())
 
-      wd.p.success(("123", Right(JsObject())))
+      wd.p.success(Right(WebDriverSession("123",JsObject())))
 
       Await.ready(wd.f, 2.seconds)
 

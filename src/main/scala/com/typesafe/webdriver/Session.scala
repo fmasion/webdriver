@@ -8,7 +8,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 import spray.can.Http.ConnectionAttemptFailedException
 import spray.json.{JsObject, JsValue, JsArray}
-import com.typesafe.webdriver.WebDriverCommands.WebDriverError
+import com.typesafe.webdriver.WebDriverCommands.{WebDriverSession, WebDriverError}
 import scala.concurrent.Future
 
 /**
@@ -27,11 +27,11 @@ class Session(wd: WebDriverCommands, sessionConnectTimeout: FiniteDuration)
     case Event(Connect(desiredCapabilities, requiredCapabilities), None) =>
       val origSender = sender()
       wd.createSession(desiredCapabilities,requiredCapabilities).onComplete {
-        case Success((sessionId, Right(capabilities))) =>
+        case Success(Right(WebDriverSession(sessionId, capabilities))) =>
           self.tell(SessionCreated(sessionId, capabilities), origSender)
-        case Success((sessionId, Left(error))) =>
+        case Success(Left(error)) =>
           log.error("Stopping due to not being able to establish a session with requested capabilities - web driver error - {}.",error)
-          origSender.tell(SessionAborted(sessionId,error), origSender)
+          origSender.tell(SessionAborted(error), origSender)
           stop()
         case Failure(_: ConnectionAttemptFailedException) =>
           log.debug("Initial connection attempt failed - retrying shortly.")
@@ -49,10 +49,10 @@ class Session(wd: WebDriverCommands, sessionConnectTimeout: FiniteDuration)
     case Event(Connect(desiredCapabilities, requiredCapabilities), None) =>
       val origSender = sender()
       wd.createSession(desiredCapabilities, requiredCapabilities).onComplete {
-        case Success((sessionId, Right(capabilities))) => self.tell(SessionCreated(sessionId, capabilities), origSender)
-        case Success((sessionId, Left(error))) =>
+        case Success(Right(WebDriverSession(sessionId, capabilities))) => self.tell(SessionCreated(sessionId, capabilities), origSender)
+        case Success(Left(error)) =>
           log.error("Stopping due to not being able to establish a session with requested capabilities - web driver error - {}.",error)
-          origSender.tell(SessionAborted(sessionId,error), origSender)
+          origSender.tell(SessionAborted(error), origSender)
           stop()
         case Failure(t) =>
           log.error("Stopping due to not being able to establish a session - exception thrown - {}.", t)
@@ -132,7 +132,7 @@ object Session {
    */
   case class ExecuteNativeJs(script: String, args: JsArray)
 
-  case class SessionAborted(sessionId: String, error:WebDriverError)
+  case class SessionAborted(error:WebDriverError)
 
   /**
    * A convenience for creating the actor.

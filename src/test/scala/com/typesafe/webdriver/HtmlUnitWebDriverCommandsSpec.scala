@@ -7,7 +7,7 @@ import scala.concurrent.{Await, Future}
 import org.specs2.mutable.Specification
 import org.specs2.time.NoDurationConversions
 import org.specs2.matcher.MatchResult
-import com.typesafe.webdriver.WebDriverCommands.{WebDriverErrorDetails, Errors, WebDriverError}
+import com.typesafe.webdriver.WebDriverCommands.{WebDriverSession, WebDriverErrorDetails, Errors, WebDriverError}
 import java.io.File
 
 @RunWith(classOf[JUnitRunner])
@@ -16,23 +16,24 @@ class HtmlUnitWebDriverCommandsSpec extends Specification with NoDurationConvers
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
 
-  def withSession(block: (WebDriverCommands, (String, Either[WebDriverError, JsValue])) => Future[Either[WebDriverError, JsValue]]): Future[Either[WebDriverError, JsValue]] = {
+  def withSession(block: (WebDriverCommands, WebDriverSession ) => Future[Either[WebDriverError, JsValue]]): Future[Either[WebDriverError, JsValue]] = {
     val commands = new HtmlUnitWebDriverCommands()
-    val maybeSession = commands.createSession().map { case (sessionId, createResult) =>
-        val result = block(commands, (sessionId, createResult))
+    val maybeSession:Future[Either[WebDriverError, JsValue]] = commands.createSession().flatMap {
+      case Right(session) =>
+        val result = block(commands, session)
         result.onComplete {
-          case _ => commands.destroySession(sessionId)
+          case _ => commands.destroySession(session.id)
         }
         result
+      case Left(error) => Future.successful(Left(error))
     }
-    maybeSession.flatMap(x => x)
+    maybeSession
   }
 
   def testFor(v: JsValue): MatchResult[Any] = {
     val result = withSession {
-      (commands, sessionId) =>
-        val (id, _) = sessionId
-        commands.executeJs(id, "var result = arguments[0];", JsArray(v))
+      (commands, session) =>
+        commands.executeJs(session.id, "var result = arguments[0];", JsArray(v))
     }
     Await.result(result, Duration(1, SECONDS)) must_== Right(v)
   }
@@ -47,26 +48,25 @@ class HtmlUnitWebDriverCommandsSpec extends Specification with NoDurationConvers
 
     "execute 2 js scripts for the same session" in {
       val commands = new HtmlUnitWebDriverCommands()
-      val maybeSession = commands.createSession().map {
-        sessionId =>
-          val (id, _) = sessionId
-          commands.executeJs(id, "var result = arguments[0];", JsArray(JsNumber(1)))
+      val result = commands.createSession().flatMap{
+        case Right(session) =>
+          commands.executeJs(session.id, "var result = arguments[0];", JsArray(JsNumber(1)))
             .flatMap {
             r =>
               import DefaultJsonProtocol._
               val result = commands.executeJs(
-                id,
+                session.id,
                 "var result = arguments[0];",
                 JsArray(JsNumber(2)))
               result.onComplete {
                 case _ =>
-                  commands.destroySession(id)
+                  commands.destroySession(session.id)
               }
               result
           }
+        case Left(error) => Future.successful(Left(error))
       }
 
-      val result = maybeSession.flatMap(x => x)
       Await.result(result, Duration(1, SECONDS)) must_== Right(JsNumber(2))
     }
   }
@@ -80,18 +80,16 @@ class HtmlUnitWebDriverCommandsSpec extends Specification with NoDurationConvers
 
   "should fail to execute invalid javascript" in {
     val result = withSession {
-      (commands, sessionId) =>
-        val (id, _) = sessionId
-        commands.executeJs(id, "this is rubbish js;", JsArray())
+      (commands, session) =>
+        commands.executeJs(session.id, "this is rubbish js;", JsArray())
     }
     Await.result(result, Duration(1, SECONDS)) must beLeft
   }
 
   "Execute JS natively requesting a commonjs function should fail" in {
     val result = withSession {
-      (commands, sessionId) =>
-        val (id, _) = sessionId
-        commands.executeNativeJs(id, "var result = require('fs').separator;", JsArray())
+      (commands, session) =>
+        commands.executeNativeJs(session.id, "var result = require('fs').separator;", JsArray())
     }
     Await.result(result, Duration(1, SECONDS)) must beLeft
   }

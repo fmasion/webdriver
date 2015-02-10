@@ -6,7 +6,7 @@ import java.util.UUID
 import com.gargoylesoftware.htmlunit.html.HtmlPage
 import scala.concurrent.Future
 import spray.json._
-import com.typesafe.webdriver.WebDriverCommands.{WebDriverErrorDetails, Errors, WebDriverError}
+import com.typesafe.webdriver.WebDriverCommands.{WebDriverSession, WebDriverErrorDetails, Errors, WebDriverError}
 
 /**
  * Runs WebDriver command in the context of the JVM ala HtmlUnit.
@@ -18,13 +18,13 @@ class HtmlUnitWebDriverCommands() extends WebDriverCommands {
 
 
   override def createSession(desiredCapabilities: JsObject = JsObject(),
-                             requiredCapabilities: JsObject = JsObject()): Future[(String, Either[WebDriverError, JsValue])] = {
+                             requiredCapabilities: JsObject = JsObject()): Future[Either[WebDriverError, WebDriverSession]] = {
     // We like Chrome for no particular reason than its JS is modern. FF may also be a good choice.
     val webClient = new WebClient(BrowserVersion.CHROME)
     val page: HtmlPage = webClient.getPage(WebClient.ABOUT_BLANK)
     val sessionId = UUID.randomUUID().toString
     sessions.put(sessionId, page)
-    Future.successful((sessionId, Right(JsObject())))
+    Future.successful( Right(WebDriverSession(sessionId, JsObject())))
   }
 
   override def destroySession(sessionId: String): Unit = {
