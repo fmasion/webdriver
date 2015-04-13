@@ -1,8 +1,6 @@
 package com.typesafe.webdriver
 
 import com.typesafe.webdriver.Session.SessionAborted
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.Specification
 import scala.concurrent.{Await, Promise, Future}
 import scala.concurrent.duration._
@@ -10,7 +8,6 @@ import org.specs2.time.NoTimeConversions
 import spray.json.{JsObject, JsString, JsValue, JsArray}
 import com.typesafe.webdriver.WebDriverCommands.{WebDriverSession, WebDriverErrorDetails, WebDriverError}
 
-@RunWith(classOf[JUnitRunner])
 class SessionSpec extends Specification with NoTimeConversions {
 
   class TestWebDriverCommands extends WebDriverCommands {

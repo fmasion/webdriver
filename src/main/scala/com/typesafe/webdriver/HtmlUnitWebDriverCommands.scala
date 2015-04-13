@@ -50,7 +50,7 @@ class HtmlUnitWebDriverCommands() extends WebDriverCommands {
                 case s: String => JsString(s)
                 case n if n == null => JsNull
                 case l: java.util.List[_] => JsArray(l.asScala.toList.map(toJsValue): _*)
-                case o: java.util.Map[_, _] => JsObject(o.asScala.map(p => p._1.toString -> toJsValue(p._2)).toList)
+                case o: java.util.Map[_, _] => JsObject(o.asScala.map(p => p._1.toString -> toJsValue(p._2)).toMap)
                 case x => JsString(x.toString)
               }
             }

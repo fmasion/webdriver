@@ -1,7 +1,5 @@
 package com.typesafe.webdriver
 
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.Specification
 import akka.testkit._
 import akka.actor.ActorRef
@@ -11,7 +9,6 @@ import spray.json.{JsObject, JsNull, JsValue, JsArray}
 import com.typesafe.webdriver.WebDriverCommands.{WebDriverSession, WebDriverError}
 
 // Note that this test will only run on Unix style environments where the "rm" command is available.
-@RunWith(classOf[JUnitRunner])
 class LocalBrowserSpec extends Specification {
 
   object TestWebDriverCommands extends WebDriverCommands {
