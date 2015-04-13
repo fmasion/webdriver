@@ -47,6 +47,15 @@ abstract class WebDriverCommands {
    */
   def executeNativeJs(sessionId: String, script: String, args: JsArray): Future[Either[WebDriverError, JsValue]]
 
+  /**
+   * Take a screenshot of the current window.
+   * GET /session/:sessionId/screenshot
+   * @see https://code.google.com/p/selenium/wiki/JsonWireProtocol#GET_/session/:sessionId/screenshot
+   * @param sessionId the session
+   * @return
+   */
+  def screenshot(sessionId:String): Future[Either[WebDriverError, JsValue]]
+
 }
 
 object WebDriverCommands {
