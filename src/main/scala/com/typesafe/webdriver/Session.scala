@@ -73,12 +73,29 @@ class Session(wd: WebDriverCommands, sessionConnectTimeout: FiniteDuration)
     case evt@Event(ScreenShot, None) =>
       self forward evt.event
       stay()
+    case evt@Event(NavigateTo(_), None) =>
+      self forward evt.event
+      stay()
   }
 
   private def handleJsExecuteResult(maybeResult: Future[Either[WebDriverError, JsValue]], origSender: ActorRef): Unit = {
     maybeResult.onComplete {
       case Success(Right(result)) => origSender ! result
       case Success(Left(error)) => origSender ! akka.actor.Status.Failure(error.toException)
+      case Failure(t) =>
+        origSender ! akka.actor.Status.Failure(t)
+        log.error("Stopping due to a problem executing commands - {}.", t)
+        stop()
+    }
+  }
+
+  private def handleUnitResult(maybeResult: Future[Either[WebDriverError, Unit]], origSender: ActorRef): Unit = {
+    maybeResult.onComplete {
+      case Success(Right(result)) =>
+        origSender ! Done
+      case Success(Left(error)) =>
+        log.debug("Unable to execute command - {}.", error)
+        origSender ! akka.actor.Status.Failure(error.toException)
       case Failure(t) =>
         origSender ! akka.actor.Status.Failure(t)
         log.error("Stopping due to a problem executing commands - {}.", t)
@@ -108,6 +125,14 @@ class Session(wd: WebDriverCommands, sessionConnectTimeout: FiniteDuration)
       someSessionId.foreach {
         sessionId =>
           handleJsExecuteResult(wd.screenshot(sessionId), origSender)
+      }
+      stay()
+    }
+    case Event(NavigateTo(url), someSessionId@Some(_)) => {
+      val origSender = sender()
+      someSessionId.foreach {
+        sessionId =>
+          handleUnitResult(wd.navigateTo(sessionId, url), origSender)
       }
       stay()
     }
@@ -149,6 +174,19 @@ object Session {
    * Take a screenshot
    */
   case object ScreenShot
+
+  /**
+   * A command without return value has been completed.
+   */
+  case object Done
+
+  /**
+   * Ask the browser to navigate to a different URL
+   *
+   * This command does not return a value but will signal its completion with a Done message.
+   * @param url the target url
+   */
+  case class NavigateTo(url: String)
 
   /**
    * A convenience for creating the actor.

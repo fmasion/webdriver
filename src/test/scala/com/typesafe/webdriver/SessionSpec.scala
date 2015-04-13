@@ -31,6 +31,9 @@ class SessionSpec extends Specification with NoTimeConversions {
     override def screenshot(sessionId: String): Future[Either[WebDriverError, JsValue]] = {
       Future.successful(Right(JsString("base64EncodedPNG")))
     }
+
+    override def navigateTo(sessionId: String, url: String): Future[Either[WebDriverError, Unit]] =
+      Future.successful(Right(Unit))
   }
 
   "A session" should {
@@ -66,6 +69,7 @@ class SessionSpec extends Specification with NoTimeConversions {
       expectMsg(JsString("hi"))
 
     }
+
     "capture a screenshot and return the base64 encoded string representing the PNG to the client" in new TestActorSystem {
 
       val wd = new TestWebDriverCommands
@@ -74,12 +78,30 @@ class SessionSpec extends Specification with NoTimeConversions {
 
       session ! Session.Connect()
 
-      wd.p.success(("123", Right(JsObject())))
+      wd.p.success(Right(WebDriverSession("123", JsObject())))
       Await.ready(wd.f, 2.seconds)
 
       session ! Session.ScreenShot
 
       expectMsg(JsString("base64EncodedPNG"))
+    }
+
+    "be able to navigate to an url" in new TestActorSystem {
+
+      val wd = new TestWebDriverCommands
+
+      val session = system.actorOf(Session.props(wd))
+
+      session ! Session.Connect()
+
+      session ! Session.NavigateTo("http://www.example.com")
+
+      wd.p.success(Right(WebDriverSession("123", JsObject())))
+
+      Await.ready(wd.f, 2.seconds)
+
+      expectMsg(Session.Done)
+
     }
   }
 }

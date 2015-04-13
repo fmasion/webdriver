@@ -77,6 +77,7 @@ class HttpWebDriverCommands(arf: ActorRefFactory, host: String, port: Int) exten
       Left(WebDriverError(response.status, response.value.convertTo[WebDriverErrorDetails]))
     }
   }
+
   protected def toEitherErrorOrSession(response: CommandResponse): Either[WebDriverError, WebDriverSession] = {
     if (response.status == Errors.Success) {
       Right(WebDriverSession(response.sessionId, response.value.asJsObject))
@@ -85,6 +86,13 @@ class HttpWebDriverCommands(arf: ActorRefFactory, host: String, port: Int) exten
     }
   }
 
+  protected def toEitherErrorOrUnit(response: CommandResponse): Either[WebDriverError, Unit] = {
+    if (response.status == Errors.Success) {
+      Right(())
+    } else {
+      Left(WebDriverError(response.status, response.value.convertTo[WebDriverErrorDetails]))
+    }
+  }
 
   override def createSession(desiredCapabilities: JsObject = JsObject(),
                              requiredCapabilities: JsObject = JsObject()): Future[Either[WebDriverError, WebDriverSession]] = {
@@ -108,5 +116,10 @@ class HttpWebDriverCommands(arf: ActorRefFactory, host: String, port: Int) exten
   override def screenshot(sessionId: String): Future[Either[WebDriverError, JsValue]] = {
     pipeline(Get(s"/session/$sessionId/screenshot"))
       .map(toEitherErrorOrValue)
+  }
+
+  override def navigateTo(sessionId: String, url: String): Future[Either[WebDriverError, Unit]] = {
+    pipeline(Post(s"/session/$sessionId/url", s"""{"url":"$url"}"""))
+      .map(toEitherErrorOrUnit)
   }
 }

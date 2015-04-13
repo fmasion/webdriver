@@ -1,6 +1,7 @@
 package com.typesafe.webdriver
 
 import org.junit.runner.RunWith
+import org.specs2.execute.{Result, AsResult}
 import org.specs2.runner.JUnitRunner
 import spray.json._
 import scala.concurrent.{Await, Future}
@@ -16,9 +17,9 @@ class HtmlUnitWebDriverCommandsSpec extends Specification with NoDurationConvers
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
 
-  def withSession(block: (WebDriverCommands, WebDriverSession ) => Future[Either[WebDriverError, JsValue]]): Future[Either[WebDriverError, JsValue]] = {
+  def withSession[T](block: (WebDriverCommands, WebDriverSession ) => Future[Either[WebDriverError, T]]): Future[Either[WebDriverError, T]] = {
     val commands = new HtmlUnitWebDriverCommands()
-    val maybeSession:Future[Either[WebDriverError, JsValue]] = commands.createSession().flatMap {
+    val maybeSession:Future[Either[WebDriverError, T]] = commands.createSession().flatMap {
       case Right(session) =>
         val result = block(commands, session)
         result.onComplete {
@@ -92,5 +93,14 @@ class HtmlUnitWebDriverCommandsSpec extends Specification with NoDurationConvers
         commands.executeNativeJs(session.id, "var result = require('fs').separator;", JsArray())
     }
     Await.result(result, Duration(1, SECONDS)) must beLeft
+  }
+
+  "Navigate to a new page should work" in new WithStubServer {
+    val baseUrl = s"http://localhost:$port/"
+    val result = withSession {
+      (commands, session) =>
+        commands.navigateTo(session.id, baseUrl)
+    }
+    Await.result(result, Duration(10, SECONDS)) must beRight(())
   }
 }
