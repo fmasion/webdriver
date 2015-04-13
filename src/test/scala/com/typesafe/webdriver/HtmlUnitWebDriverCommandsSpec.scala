@@ -1,18 +1,12 @@
 package com.typesafe.webdriver
 
-import org.junit.runner.RunWith
-import org.specs2.execute.{Result, AsResult}
-import org.specs2.runner.JUnitRunner
 import spray.json._
 import scala.concurrent.{Await, Future}
 import org.specs2.mutable.Specification
-import org.specs2.time.NoDurationConversions
 import org.specs2.matcher.MatchResult
 import com.typesafe.webdriver.WebDriverCommands.{WebDriverSession, WebDriverErrorDetails, Errors, WebDriverError}
-import java.io.File
 
-@RunWith(classOf[JUnitRunner])
-class HtmlUnitWebDriverCommandsSpec extends Specification with NoDurationConversions {
+class HtmlUnitWebDriverCommandsSpec extends Specification {
 
   import scala.concurrent.ExecutionContext.Implicits.global
   import scala.concurrent.duration._
