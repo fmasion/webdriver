@@ -70,9 +70,9 @@ object LocalBrowser {
  * Used to manage a local instance of PhantomJs. The default is to assume that phantomjs is on the path.
  */
 object PhantomJs {
-  def props(arf: ActorRefFactory, host: String = "127.0.0.1", port: Int = 8910): Props = {
+  def props(arf: ActorRefFactory, host: String = "127.0.0.1", port: Int = 8910, _args:Seq[String]=Seq.empty ): Props = {
     val wd = new PhantomJsWebDriverCommands(arf, host, port)
-    val args = Some(Seq("phantomjs", s"--webdriver=$host:$port"))
+    val args = Some(Seq("phantomjs", s"--webdriver=$host:$port") ++ _args)
     Props(classOf[LocalBrowser], Session.props(wd), args)
   }
 }
