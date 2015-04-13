@@ -8,14 +8,15 @@ import akka.actor.ActorRef
 import java.io.File
 import scala.concurrent.{Promise, Future}
 import spray.json.{JsObject, JsNull, JsValue, JsArray}
-import com.typesafe.webdriver.WebDriverCommands.WebDriverError
+import com.typesafe.webdriver.WebDriverCommands.{WebDriverSession, WebDriverError}
 
 // Note that this test will only run on Unix style environments where the "rm" command is available.
 @RunWith(classOf[JUnitRunner])
 class LocalBrowserSpec extends Specification {
 
   object TestWebDriverCommands extends WebDriverCommands {
-    override def createSession(desiredCapabilities:JsObject=JsObject(), requiredCapabilities:JsObject=JsObject()): Future[(String, Either[WebDriverError, JsValue])] = Promise.successful(("123",Right(JsObject()))).future
+    override def createSession(desiredCapabilities:JsObject=JsObject(), requiredCapabilities:JsObject=JsObject()): Future[Either[WebDriverError, WebDriverSession]] =
+      Promise.successful(Right(WebDriverSession("123",JsObject()))).future
 
     override def destroySession(sessionId: String) {}
 

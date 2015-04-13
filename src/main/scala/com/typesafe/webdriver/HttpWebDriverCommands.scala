@@ -3,7 +3,7 @@ package com.typesafe.webdriver
 import akka.actor.ActorRefFactory
 import spray.json._
 import scala.concurrent.Future
-import com.typesafe.webdriver.WebDriverCommands.{Errors, WebDriverError, WebDriverErrorDetails}
+import com.typesafe.webdriver.WebDriverCommands.{WebDriverSession, Errors, WebDriverError, WebDriverErrorDetails}
 
 /**
  * Communicates with a web driver host via http and json.
@@ -77,12 +77,19 @@ class HttpWebDriverCommands(arf: ActorRefFactory, host: String, port: Int) exten
       Left(WebDriverError(response.status, response.value.convertTo[WebDriverErrorDetails]))
     }
   }
+  protected def toEitherErrorOrSession(response: CommandResponse): Either[WebDriverError, WebDriverSession] = {
+    if (response.status == Errors.Success) {
+      Right(WebDriverSession(response.sessionId, response.value.asJsObject))
+    } else {
+      Left(WebDriverError(response.status, response.value.convertTo[WebDriverErrorDetails]))
+    }
+  }
 
 
   override def createSession(desiredCapabilities: JsObject = JsObject(),
-                             requiredCapabilities: JsObject = JsObject()): Future[(String, Either[WebDriverError, JsValue])] = {
+                             requiredCapabilities: JsObject = JsObject()): Future[Either[WebDriverError, WebDriverSession]] = {
     val capabilities = JsObject("desiredCapabilities"->desiredCapabilities, "requiredCapabilities"->requiredCapabilities).compactPrint
-    pipeline(Post("/session",capabilities)).map(response => (response.sessionId,toEitherErrorOrValue(response)))
+    pipeline(Post("/session",capabilities)).map(toEitherErrorOrSession)
   }
 
   override def destroySession(sessionId: String) {
