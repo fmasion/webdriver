@@ -22,7 +22,7 @@ object Main {
     val browser = system.actorOf(PhantomJs.props(system), "localBrowser")
     browser ! LocalBrowser.Startup
     for (
-      session <- (browser ? LocalBrowser.CreateSession).mapTo[ActorRef];
+      session <- (browser ? LocalBrowser.CreateSession()).mapTo[ActorRef];
       result <- (session ? Session.ExecuteNativeJs("return arguments[0]", JsArray(JsNumber(999)))).mapTo[JsNumber]
     ) yield {
       println(result)
