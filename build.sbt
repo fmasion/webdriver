@@ -5,7 +5,7 @@ scalaVersion := "2.10.4"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.9",
-  "io.spray" % "spray-client" % "1.3.1",
+  "io.spray" %% "spray-client" % "1.3.2",
   "io.spray" %% "spray-json" % "1.3.2",
   "net.sourceforge.htmlunit" % "htmlunit" % "2.15",
   "org.specs2" %% "specs2-core" % "3.4" % "test",
