@@ -1,10 +1,15 @@
 package com.typesafe.webdriver
 
 import akka.actor._
+import akka.contrib.process.BlockingProcess
+import akka.contrib.process.BlockingProcess.Exited
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
+import akka.stream.io.Framing
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import spray.json.JsObject
-import scala.sys.process._
 import com.typesafe.webdriver.LocalBrowser._
-import scala.Some
+import scala.collection.immutable
 
 /**
  * Provides an Actor on behalf of a browser. Browsers are represented as operating system processes and are
@@ -13,7 +18,10 @@ import scala.Some
  * @param maybeArgs a sequence of command line arguments used to launch the browser from the command line. If this is
  *                  set to None then the process is deemed to be controlled outside of this actor.
  */
-class LocalBrowser(sessionProps: Props, maybeArgs: Option[Seq[String]]) extends Actor with FSM[State, Option[Process]] {
+class LocalBrowser(sessionProps: Props, maybeArgs: Option[immutable.Seq[String]]) extends Actor with FSM[State, Option[ActorRef]] {
+
+  val settings = ActorMaterializerSettings(context.system)
+  implicit val materializer = ActorMaterializer(settings)
 
   startWith(Uninitialized, None)
 
@@ -21,10 +29,14 @@ class LocalBrowser(sessionProps: Props, maybeArgs: Option[Seq[String]]) extends 
     case Event(Startup, None) =>
       maybeArgs match {
         case Some(args) =>
-          val p = Process(args).run(ProcessLogger(log.debug, log.error))
-          goto(Started) using Some(p)
+          context.actorOf(BlockingProcess.props(args))
+          stay()
         case None => goto(Started) using None
       }
+    case Event(BlockingProcess.Started(stdin,stdout,stderr),_)=>
+      Source(stdout).via(Framing.delimiter(ByteString("\n"), Int.MaxValue).map(_.utf8String).named("lineFraming")).runForeach(log.debug)
+      Source(stderr).via(Framing.delimiter(ByteString("\n"), Int.MaxValue).map(_.utf8String).named("lineFraming")).runForeach(log.error)
+      goto(Started) using Some(sender())
   }
 
   when(Started) {
@@ -33,15 +45,20 @@ class LocalBrowser(sessionProps: Props, maybeArgs: Option[Seq[String]]) extends 
       session ! Session.Connect(desiredCapabilities, requiredCapabilities)
       sender ! session
       stay()
+    case Event(Exited(exitCode), _)=>
+      stop()
   }
 
   onTermination {
     case StopEvent(_, _, maybeProcess) =>
-      maybeProcess.foreach(p => p.destroy())
+      maybeProcess.foreach(p => p ! BlockingProcess.Destroy)
   }
 
   initialize()
 }
+
+
+
 
 object LocalBrowser {
 

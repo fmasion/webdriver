@@ -2,9 +2,10 @@ package com.typesafe.webdriver
 
 import org.specs2.mutable.Specification
 import akka.testkit._
-import akka.actor.ActorRef
+import akka.actor.{Props, ActorRef}
 import java.io.File
 import scala.concurrent.{Promise, Future}
+import scala.collection.immutable
 import spray.json.{JsObject, JsNull, JsValue, JsArray}
 import com.typesafe.webdriver.WebDriverCommands.{WebDriverSession, WebDriverError}
 
@@ -37,18 +38,12 @@ class LocalBrowserSpec extends Specification {
       val f = File.createTempFile("LocalBrowserSpec", "")
       f.deleteOnExit()
 
-      val localBrowser = TestFSMRef(new LocalBrowser(Session.props(TestWebDriverCommands), Some(Seq("rm", f.getCanonicalPath))))
+      val localBrowser = TestFSMRef(new LocalBrowser(Session.props(TestWebDriverCommands), Some(immutable.Seq("rm", f.getCanonicalPath))))
 
       val probe = TestProbe()
       probe watch localBrowser
 
-      localBrowser.stateName must_== LocalBrowser.Uninitialized
-
       localBrowser ! LocalBrowser.Startup
-
-      localBrowser.stateName must_== LocalBrowser.Started
-
-      localBrowser.stop()
 
       probe.expectTerminated(localBrowser)
 
