@@ -3,6 +3,8 @@ name := "webdriver"
 
 scalaVersion := "2.10.4"
 
+version := "1.1.2"
+
 libraryDependencies ++= Seq(
 
   "com.typesafe.akka" %% "akka-actor" % "2.3.11",
@@ -25,10 +27,9 @@ lazy val root = project in file(".")
 lazy val `webdriver-tester` = project.dependsOn(root)
 
 // Publish settings
-publishTo := {
-  if (isSnapshot.value) Some(Opts.resolver.sonatypeSnapshots)
-  else Some(Opts.resolver.sonatypeStaging)
-}
+publishTo := Some("Fred's bintray" at "https://api.bintray.com/maven/fmasion/maven/webdriver")
+publishMavenStyle := true
+
 homepage := Some(url("https://github.com/typesafehub/webdriver"))
 licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 pomExtra := {
